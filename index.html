@@ -436,7 +436,6 @@
     const modalBodyFatInput = document.getElementById('modal-body-fat');
     const modalCancelBtn = document.getElementById('modal-cancel-btn');
     const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-
     const healthAlert = document.getElementById('health-alert');
     const alertMessage = document.getElementById('alert-message');
 
@@ -446,7 +445,11 @@
         const height = parseFloat(heightInput.value);
         const weight = parseFloat(weightInput.value);
         const age = parseInt(ageInput.value);
-        const gender = document.querySelector('input[name="gender"]:checked').value;   
+        const gender = document.querySelector('input[name="gender"]:checked').value;
+
+        // 获取弹窗中的进阶数据
+        const waist = parseFloat(modalWaistInput.value);
+        const inputBodyFat = parseFloat(modalBodyFatInput.value);
 
         if (!height || !weight || !age) {
             alert('请输入有效的身高、体重和年龄！');
@@ -468,12 +471,19 @@
         }
         const roundedBMR = Math.round(bmr);
 
-        // 4. 智能估算体脂率 (使用 Deurenberg 公式)
+        // 4. 智能估算体脂率 (核心逻辑)
         let finalBodyFat = null;
-        const genderFactor = (gender === 'male') ? 1 : 0;
-        finalBodyFat = (1.20 * bmi) + (0.23 * age) - (10.8 * genderFactor) - 5.4;
 
-        // 5. 多指标交叉验证逻辑 (核心部分)
+        if (!isNaN(inputBodyFat)) {
+            // 情况一：用户手动输入了体脂率，直接使用
+            finalBodyFat = inputBodyFat;
+        } else {
+            // 情况二：用户未输入体脂率，使用 Deurenberg 公式估算
+            const genderFactor = (gender === 'male') ? 1 : 0;
+            finalBodyFat = (1.20 * bmi) + (0.23 * age) - (10.8 * genderFactor) - 5.4;
+        }
+
+        // 5. 多指标交叉验证逻辑
         let category, description, color;
         let markerPosition = ((bmi - 10) / 30) * 100;
         if (markerPosition < 0) markerPosition = 0;
@@ -498,6 +508,7 @@
         } else {
             // BMI 超重或肥胖时的深度分析
             color = "#F44336";
+            // 只有在用户输入了腰围时，才进行腰围相关的分析
             if (!isNaN(waist)) {
                 const abdominalObesity = (gender === 'male' && waist >= 90) || (gender === 'female' && waist >= 85);
                 const isMuscular = (gender === 'male' && finalBodyFat < 20) || (gender === 'female' && finalBodyFat < 28);
@@ -517,14 +528,19 @@
                     tipsOverweight.style.display = 'block';
                 }
             } else {
+                // 用户未输入腰围，则按常规BMI标准判断
                 if (bmi < 28) {
                     category = "超重";
                     description = "您的体重略高于健康范围，建议适当调整饮食和增加运动。";
                     tipsOverweight.style.display = 'block';
+                    alertMessage.innerText = "您的体重略高于健康范围，建议适当调整饮食和增加运动。";
+                    healthAlert.style.display = 'flex';
                 } else {
                     category = "肥胖";
                     description = "您的体重过高，可能会增加健康风险。";
                     tipsObese.style.display = 'block';
+                    alertMessage.innerText = "您的体重过高，可能对健康造成风险，建议寻求专业帮助。";
+                    healthAlert.style.display = 'flex'; 
                 }
             }
         }
@@ -535,27 +551,38 @@
         bmiCategory.style.color = color;
         bmiMarker.style.left = `${markerPosition}%`;
         bmiResult.style.display = 'block';
-
-        // 7. 超重弹窗提醒
-        if (bmi > 23.9) {
-            if (bmi < 28) {
-                alertMessage.innerText = "您的体重略高于健康范围，建议适当调整饮食和增加运动。";
-            } else {
-                alertMessage.innerText = "您的体重过高，可能对健康造成风险，建议寻求专业帮助。";
-            }
-            healthAlert.style.display = 'flex';
-        }
-    }
+      
+    } 
 
     // --- 事件监听器 ---
 
-    // 1. 主“计算BMI”按钮：只负责打开弹窗
+    // 1. 主“计算BMI”按钮：先算BMI，再决定要不要弹窗
     calculateBtn.addEventListener('click', function () {
-        // 清空弹窗里的旧数据
-        modalWaistInput.value = '';
-        modalBodyFatInput.value = '';
-        // 显示弹窗
-        advancedModal.style.display = 'flex';
+        // 先获取基础数据
+        const height = parseFloat(heightInput.value);
+        const weight = parseFloat(weightInput.value);
+        const age = parseInt(ageInput.value);
+
+        if (!height || !weight || !age) {
+            alert('请输入有效的身高、体重和年龄！');
+            return;
+        }
+
+        // 提前计算 BMI
+        const heightInMeter = height / 100;
+        const bmi = weight / (heightInMeter * heightInMeter);
+
+        // 如果 BMI 超过 23.9 (超重)，才弹出腰围输入框
+        if (bmi > 23.9) {
+            // 清空弹窗里的旧数据
+            modalWaistInput.value = '';
+            modalBodyFatInput.value = '';
+            // 显示弹窗
+            advancedModal.style.display = 'flex';
+        } else {
+            // 如果正常，直接执行计算并显示结果，不弹窗
+            performCalculation();
+        }
     });
 
     // 2. 弹窗“取消”按钮：关闭弹窗
