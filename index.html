@@ -298,22 +298,27 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="height">身高 (厘米)</label>
                     <input type="number" id="height" placeholder="例如: 170" min="100" max="250">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="weight">体重 (公斤)</label>
                     <input type="number" id="weight" placeholder="例如: 65" min="30" max="300">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="age">年龄</label>
                     <input type="number" id="age" placeholder="例如: 25" min="18" max="120">
                 </div>
                 
+                <div class="form-group">
+                    <label for="waist">腰围 (厘米) <span style="font-size: 12px; color: #999;">(可选)</span></label>
+                    <input type="number" id="waist" placeholder="例如: 75" min="40" max="200">
+                </div>
+
                 <button id="calculate-btn">计算BMI</button>
                 <button id="reset-btn" class="reset-btn">重置</button>
             </div>
@@ -381,141 +386,152 @@
     </div>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const calculateBtn = document.getElementById('calculate-btn');
-            const resetBtn = document.getElementById('reset-btn');
-            const heightInput = document.getElementById('height');
-            const weightInput = document.getElementById('weight');
-            const ageInput = document.getElementById('age');
-            const bmiResult = document.getElementById('bmi-result');
-            const bmiValue = document.getElementById('bmi-value');
-            const bmiCategory = document.getElementById('bmi-category');
-            const bmiDesc = document.getElementById('bmi-desc');
-            const bmiMarker = document.getElementById('bmi-marker');
-            
-            const tipsUnderweight = document.getElementById('tips-underweight');
-            const tipsNormal = document.getElementById('tips-normal');
-            const tipsOverweight = document.getElementById('tips-overweight');
-            const tipsObese = document.getElementById('tips-obese');
-            
-            // 计算BMI并显示结果
-            calculateBtn.addEventListener('click', function() {
-                // 获取输入值
-                const height = parseFloat(heightInput.value);
-                const weight = parseFloat(weightInput.value);
-                const age = parseInt(ageInput.value);
-                const gender = document.querySelector('input[name="gender"]:checked').value;
-                
-                // 验证输入
-                if (!height || !weight || !age) {
-                    alert('请输入有效的身高、体重和年龄！');
-                    return;
+        // --- 获取所有页面元素 ---
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // 输入框
+        const heightInput = document.getElementById('height');
+        const weightInput = document.getElementById('weight');
+        const ageInput = document.getElementById('age');
+        const waistInput = document.getElementById('waist');
+
+        // 结果显示区域
+        const bmiResult = document.getElementById('bmi-result');
+        const bmiValue = document.getElementById('bmi-value');
+        const bmiCategory = document.getElementById('bmi-category');
+        const bmiDesc = document.getElementById('bmi-desc');
+        const bmiMarker = document.getElementById('bmi-marker');
+
+        // 健康建议
+        const tipsUnderweight = document.getElementById('tips-underweight');
+        const tipsNormal = document.getElementById('tips-normal');
+        const tipsOverweight = document.getElementById('tips-overweight');
+        const tipsObese = document.getElementById('tips-obese');
+
+        // --- 计算按钮点击事件 ---
+        calculateBtn.addEventListener('click', function () {
+            // 1. 获取并验证输入值
+            const height = parseFloat(heightInput.value);
+            const weight = parseFloat(weightInput.value);
+            const age = parseInt(ageInput.value);
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const waist = parseFloat(waistInput.value);
+
+            if (!height || !weight || !age) {
+                alert('请输入有效的身高、体重和年龄！');
+                return;
+            }
+
+            // 2. 计算 BMI
+            const heightInMeter = height / 100;
+            const bmi = weight / (heightInMeter * heightInMeter);
+            const roundedBMI = bmi.toFixed(1);
+            bmiValue.textContent = roundedBMI;
+
+            // 3. 计算 BMR (Mifflin-St Jeor 公式)
+            let bmr = 0;
+            if (gender === 'male') {
+                bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+            } else {
+                bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+            }
+            const roundedBMR = Math.round(bmr);
+
+            // 4. 智能估算体脂率 (使用 Deurenberg 公式)
+            let finalBodyFat = null;
+            // 公式: (1.20 * BMI) + (0.23 * Age) - (10.8 * Gender) - 5.4
+            // 其中男性 Gender=1, 女性 Gender=0
+            const genderFactor = (gender === 'male') ? 1 : 0;
+            finalBodyFat = (1.20 * bmi) + (0.23 * age) - (10.8 * genderFactor) - 5.4;
+
+            // 5. 多指标交叉验证逻辑 (核心部分)
+            let category, description, color;
+            let markerPosition = ((bmi - 10) / 30) * 100; // 将BMI(10-40)映射到0-100%
+            if (markerPosition < 0) markerPosition = 0;
+            if (markerPosition > 100) markerPosition = 100;
+
+            // 隐藏所有健康建议
+            tipsUnderweight.style.display = 'none';
+            tipsNormal.style.display = 'none';
+            tipsOverweight.style.display = 'none';
+            tipsObese.style.display = 'none';
+
+            if (bmi < 18.5) {
+                category = "体重过轻";
+                description = "您的BMI低于标准范围，建议适当增加营养摄入。";
+                color = "#FF9800"; // 橙色
+                tipsUnderweight.style.display = 'block';
+            }
+            else if (bmi >= 18.5 && bmi <= 23.9) {
+                category = "标准健康";
+                description = "恭喜！您的各项指标都在理想范围内。";
+                color = "#4CAF50"; // 绿色
+                tipsNormal.style.display = 'block';
+            }
+            else {
+                // BMI 超重或肥胖时的深度分析
+                color = "#F44336"; // 默认红色
+
+                // 情况A：有腰围数据，进行交叉验证
+                if (!isNaN(waist)) {
+                    // 腹型肥胖判定：男性>=90cm, 女性>=85cm
+                    const abdominalObesity = (gender === 'male' && waist >= 90) || (gender === 'female' && waist >= 85);
+
+                    // 肌肉型判定：BMI高但体脂率不高 (男性<20%, 女性<28%)
+                    const isMuscular = (gender === 'male' && finalBodyFat < 20) || (gender === 'female' && finalBodyFat < 28);
+
+                    if (isMuscular) {
+                        category = "肌肉型健康体重";
+                        description = "虽然BMI显示超重，但结合体脂率来看，这属于健康的肌肉型身材，无需刻意减重！";
+                        color = "#2196F3"; // 蓝色
+                    } else if (abdominalObesity) {
+                        category = "中心性肥胖风险";
+                        description = "BMI超标且腰围较大，内脏脂肪可能较高，建议重点控制腹部脂肪。";
+                        tipsObese.style.display = 'block';
+                    } else {
+                        category = "超重但腰围尚可";
+                        description = "虽然体重超标，但腰围还在安全范围内。建议保持运动，防止脂肪堆积到腹部。";
+                        color = "#FF9800"; // 黄色
+                        tipsOverweight.style.display = 'block';
+                    }
                 }
-                
-                if (height < 100 || height > 250) {
-                    alert('请输入有效的身高（100-250厘米）！');
-                    return;
+                // 情况B：没有腰围数据，按传统BMI判断
+                else {
+                    if (bmi < 28) {
+                        category = "超重";
+                        description = "您的体重略高于健康范围，建议适当调整饮食和增加运动。";
+                        tipsOverweight.style.display = 'block';
+                    } else {
+                        category = "肥胖";
+                        description = "您的体重过高，可能会增加健康风险。";
+                        tipsObese.style.display = 'block';
+                    }
                 }
-                
-                if (weight < 30 || weight > 300) {
-                    alert('请输入有效的体重（30-300公斤）！');
-                    return;
-                }
-                
-                if (age < 18 || age > 120) {
-                    alert('请输入有效的年龄（18-120岁）！');
-                    return;
-                }
-                
-                // 计算BMI: 体重(kg) / 身高(m)²
-                const heightInMeter = height / 100;
-                const bmi = weight / (heightInMeter * heightInMeter);
-                const roundedBMI = bmi.toFixed(1);
-                
-                // 设置BMI值
-                bmiValue.textContent = roundedBMI;
-                
-                // 根据BMI值确定分类
-                let category, description, color;
-                let markerPosition = 0;
-                
-                // 隐藏所有提示
-                tipsUnderweight.style.display = 'none';
-                tipsNormal.style.display = 'none';
-                tipsOverweight.style.display = 'none';
-                tipsObese.style.display = 'none';
-                
-                if (bmi < 18.5) {
-                    category = '体重过轻';
-                    description = '您的体重低于健康范围，可能需要增加营养摄入。';
-                    color = '#4287f5';
-                    markerPosition = (bmi / 40) * 100;
-                    tipsUnderweight.style.display = 'block';
-                } else if (bmi >= 18.5 && bmi < 24) {
-                    category = '正常体重';
-                    description = '恭喜！您的体重在健康范围内。';
-                    color = '#4CAF50';
-                    markerPosition = (bmi / 40) * 100;
-                    tipsNormal.style.display = 'block';
-                } else if (bmi >= 24 && bmi < 28) {
-                    category = '超重';
-                    description = '您的体重略高于健康范围，建议适当调整饮食和增加运动。';
-                    color = '#FFC107';
-                    markerPosition = (bmi / 40) * 100;
-                    tipsOverweight.style.display = 'block';
-                } else if (bmi >= 28 && bmi < 35) {
-                    category = '肥胖';
-                    description = '您的体重过高，可能会增加健康风险，建议咨询医生。';
-                    color = '#FF9800';
-                    markerPosition = (bmi / 40) * 100;
-                    tipsObese.style.display = 'block';
-                } else {
-                    category = '重度肥胖';
-                    description = '您的体重严重超标，存在较高健康风险，请咨询医生并采取行动。';
-                    color = '#F44336';
-                    markerPosition = (bmi / 40) * 100;
-                    if (markerPosition > 100) markerPosition = 100;
-                    tipsObese.style.display = 'block';
-                }
-                
-                // 更新结果
-                bmiCategory.textContent = category;
-                bmiDesc.textContent = description;
-                bmiCategory.style.color = color;
-                
-                // 更新标记位置
-                bmiMarker.style.left = `${markerPosition}%`;
-                
-                // 显示结果
-                bmiResult.style.display = 'block';
-            });
-            
-            // 重置表单
-            resetBtn.addEventListener('click', function() {
-                heightInput.value = '';
-                weightInput.value = '';
-                ageInput.value = '';
-                document.getElementById('male').checked = true;
-                bmiResult.style.display = 'none';
-                
-                // 隐藏所有提示
-                tipsUnderweight.style.display = 'none';
-                tipsNormal.style.display = 'none';
-                tipsOverweight.style.display = 'none';
-                tipsObese.style.display = 'none';
-            });
-            
-            // 输入框聚焦效果
-            const inputs = document.querySelectorAll('input[type="number"]');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.parentElement.classList.add('focused');
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.parentElement.classList.remove('focused');
-                });
-            });
+            }
+
+            // 6. 更新界面显示
+            bmiCategory.textContent = category;
+            bmiDesc.innerHTML = `${description}<br><br><strong>🔥 您的基础代谢率 (BMR) 约为：${roundedBMR} 大卡/天</strong>`;
+            bmiCategory.style.color = color;
+            bmiMarker.style.left = `${markerPosition}%`;
+            bmiResult.style.display = 'block';
+        });
+
+        // --- 重置按钮点击事件 ---
+        resetBtn.addEventListener('click', function () {
+            heightInput.value = '';
+            weightInput.value = '';
+            ageInput.value = '';
+            waistInput.value = '';
+            document.getElementById('male').checked = true;
+            bmiResult.style.display = 'none';
+
+            // 隐藏所有提示
+            tipsUnderweight.style.display = 'none';
+            tipsNormal.style.display = 'none';
+            tipsOverweight.style.display = 'none';
+            tipsObese.style.display = 'none';
         });
     </script>
 </body>
