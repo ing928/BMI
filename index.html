@@ -282,7 +282,7 @@
             <h1>健康BMI计算器</h1>
             <p>了解您的身体质量指数，保持健康生活</p>
         </div>
-        
+
         <div class="content">
             <div class="form-section">
                 <div class="form-group">
@@ -313,7 +313,7 @@
                     <label for="age">年龄</label>
                     <input type="number" id="age" placeholder="例如: 25" min="18" max="120">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="waist">腰围 (厘米) <span style="font-size: 12px; color: #999;">(可选)</span></label>
                     <input type="number" id="waist" placeholder="例如: 75" min="40" max="200">
@@ -322,7 +322,7 @@
                 <button id="calculate-btn">计算BMI</button>
                 <button id="reset-btn" class="reset-btn">重置</button>
             </div>
-            
+
             <div class="result-section">
                 <div class="bmi-result" id="bmi-result">
                     <h2>您的BMI结果</h2>
@@ -330,7 +330,7 @@
                     <div class="bmi-category" id="bmi-category">正常体重</div>
                     <div class="bmi-desc" id="bmi-desc">您的体重在健康范围内。</div>
                 </div>
-                
+
                 <div class="bmi-chart">
                     <h3>BMI分类表</h3>
                     <div class="chart-container">
@@ -344,10 +344,10 @@
                         <span>重度肥胖</span>
                     </div>
                 </div>
-                
+
                 <div class="health-tips">
                     <h3>健康建议</h3>
-                    
+
                     <div class="tips-content" id="tips-underweight">
                         <p>您的体重低于健康范围，可能需要增加营养摄入：</p>
                         <p>• 增加高蛋白食物和健康脂肪的摄入</p>
@@ -355,7 +355,7 @@
                         <p>• 结合力量训练，增加肌肉质量</p>
                         <p>• 如体重持续偏低，建议咨询医生或营养师</p>
                     </div>
-                    
+
                     <div class="tips-content" id="tips-normal">
                         <p>您的体重在健康范围内，请继续保持：</p>
                         <p>• 保持均衡饮食，摄入各类营养素</p>
@@ -363,7 +363,7 @@
                         <p>• 保持充足的睡眠和水分摄入</p>
                         <p>• 定期体检，持续关注健康状况</p>
                     </div>
-                    
+
                     <div class="tips-content" id="tips-overweight">
                         <p>您的体重略高于健康范围，建议：</p>
                         <p>• 控制饮食热量，减少高糖高脂食物摄入</p>
@@ -371,7 +371,7 @@
                         <p>• 规律运动，每周至少150-300分钟有氧运动</p>
                         <p>• 结合力量训练，提高基础代谢率</p>
                     </div>
-                    
+
                     <div class="tips-content" id="tips-obese">
                         <p>您的体重过高，可能对健康造成风险，建议：</p>
                         <p>• 在医生指导下制定减重计划</p>
@@ -384,7 +384,7 @@
             </div>
         </div>
     </div>
-    
+
     <script>
         // --- 获取所有页面元素 ---
         const calculateBtn = document.getElementById('calculate-btn');
@@ -516,6 +516,22 @@
             bmiCategory.style.color = color;
             bmiMarker.style.left = `${markerPosition}%`;
             bmiResult.style.display = 'block';
+            // --- 在 calculateBtn 点击事件的最末尾添加 ---
+
+            // 如果 BMI 大于 23.9，就显示弹窗
+            if (bmi > 23.9) {
+                const alertBox = document.getElementById('health-alert');
+                const alertMessage = document.getElementById('alert-message');
+
+                // 可以根据不同的超重情况，显示不同的提醒语
+                if (bmi < 28) {
+                    alertMessage.innerText = "您的体重略高于健康范围，建议适当调整饮食和增加运动。";
+                } else {
+                    alertMessage.innerText = "您的体重过高，可能对健康造成风险，建议寻求专业帮助。";
+                }
+
+                alertBox.style.display = 'flex'; // 显示弹窗
+            }
         });
 
         // --- 重置按钮点击事件 ---
@@ -534,5 +550,13 @@
             tipsObese.style.display = 'none';
         });
     </script>
+    <!-- 弹窗结构 -->
+    <div id="health-alert" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 300px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <h3 style="color: #F44336; margin-top: 0;">⚠️ 健康提醒</h3>
+            <p id="alert-message">您的体重可能超标，请注意健康！</p>
+            <button onclick="document.getElementById('health-alert').style.display='none'" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px;">我知道了</button>
+        </div>
+    </div>
 </body>
 </html>
