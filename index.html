@@ -329,22 +329,7 @@
                         📊 一键生成健康报告
                     </button>
 
-                    <!-- 历史记录区域 (带折叠功能) -->
-                    <div id="history-section" style="margin-top: 25px; border-top: 1px dashed #ddd; padding-top: 15px;">
-                        <!-- 点击这个按钮可以展开/收起历史记录 -->
-                        <div id="history-toggle-btn" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 8px; background-color: #f9f9f9; border-radius: 8px;">
-                            <h4 style="margin: 0; color: #555; font-size: 15px;">📅 历史记录</h4>
-                            <span id="history-arrow" style="font-size: 12px; color: #999;">▼ 展开</span>
-                        </div>
 
-                        <!-- 历史记录列表 (默认隐藏) -->
-                        <div id="history-list-wrapper" style="display: none; margin-top: 10px;">
-                            <div id="history-list" style="font-size: 14px; color: #666; max-height: 150px; overflow-y: auto; background-color: #fafafa; padding: 10px; border-radius: 8px;">
-                                <p style="margin: 0; color: #999;">暂无历史记录</p>
-                            </div>
-                            <button id="clear-history-btn" style="display: none; margin-top: 10px; padding: 5px 10px; background-color: #f1f1f1; color: #999; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; cursor: pointer;">清空历史</button>
-                        </div>
-                    </div>
 
                 </div>
 
@@ -362,46 +347,61 @@
                     </div>
                 </div>
 
-                <div class="health-tips">
-                    <h3>健康建议</h3>
 
-                    <div class="tips-content" id="tips-underweight">
-                        <p>您的体重低于健康范围，可能需要增加营养摄入：</p>
-                        <p>• 增加高蛋白食物和健康脂肪的摄入</p>
-                        <p>• 适当增加餐次，保证足够的热量摄入</p>
-                        <p>• 结合力量训练，增加肌肉质量</p>
-                        <p>• 如体重持续偏低，建议咨询医生或营养师</p>
-                    </div>
-
-                    <div class="tips-content" id="tips-normal">
-                        <p>您的体重在健康范围内，请继续保持：</p>
-                        <p>• 保持均衡饮食，摄入各类营养素</p>
-                        <p>• 每周进行至少150分钟中等强度的运动</p>
-                        <p>• 保持充足的睡眠和水分摄入</p>
-                        <p>• 定期体检，持续关注健康状况</p>
-                    </div>
-
-                    <div class="tips-content" id="tips-overweight">
-                        <p>您的体重略高于健康范围，建议：</p>
-                        <p>• 控制饮食热量，减少高糖高脂食物摄入</p>
-                        <p>• 增加蔬果摄入，保证充足的膳食纤维</p>
-                        <p>• 规律运动，每周至少150-300分钟有氧运动</p>
-                        <p>• 结合力量训练，提高基础代谢率</p>
-                    </div>
-
-                    <div class="tips-content" id="tips-obese">
-                        <p>您的体重过高，可能对健康造成风险，建议：</p>
-                        <p>• 在医生指导下制定减重计划</p>
-                        <p>• 控制每日热量摄入，调整饮食结构</p>
-                        <p>• 循序渐进增加运动量，避免过度运动</p>
-                        <p>• 定期监测健康指标，如血压、血糖等</p>
-                        <p>• 寻求专业医生或营养师的帮助</p>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
+    <!-- 新增的底部信息区域 -->
+    <div class="bottom-info-section" style="padding: 30px; background-color: #f9f9f9; border-top: 1px solid #eee;">
+        <!-- 粘贴过来的健康建议模块 -->
+        <div class="health-tips" style="margin-bottom: 30px;">
+            <h3>健康建议</h3>
+            <div class="tips-content" id="tips-underweight">
+                <p>您的体重低于健康范围，可能需要增加营养摄入：</p>
+                <p>• 增加高蛋白食物和健康脂肪的摄入</p>
+                <p>• 适当增加餐次，保证足够的热量摄入</p>
+                <p>• 结合力量训练，增加肌肉质量</p>
+                <p>• 如体重持续偏低，建议咨询医生或营养师</p>
+            </div>
+            <div class="tips-content" id="tips-normal">
+                <p>您的体重在健康范围内，请继续保持：</p>
+                <p>• 保持均衡饮食，摄入各类营养素</p>
+                <p>• 每周进行至少150分钟中等强度的运动</p>
+                <p>• 保持充足的睡眠和水分摄入</p>
+                <p>• 定期体检，持续关注健康状况</p>
+            </div>
+            <div class="tips-content" id="tips-overweight">
+                <p>您的体重略高于健康范围，建议：</p>
+                <p>• 控制饮食热量，减少高糖高脂食物摄入</p>
+                <p>• 增加蔬果摄入，保证充足的膳食纤维</p>
+                <p>• 规律运动，每周至少150-300分钟有氧运动</p>
+                <p>• 结合力量训练，提高基础代谢率</p>
+            </div>
+            <div class="tips-content" id="tips-obese">
+                <p>您的体重过高，可能对健康造成风险，建议：</p>
+                <p>• 在医生指导下制定减重计划</p>
+                <p>• 控制每日热量摄入，调整饮食结构</p>
+                <p>• 循序渐进增加运动量，避免过度运动</p>
+                <p>• 定期监测健康指标，如血压、血糖等</p>
+                <p>• 寻求专业医生或营养师的帮助</p>
+            </div>
+        </div>
+
+        <!-- 粘贴过来的历史记录模块 -->
+        <div id="history-section">
+            <div id="history-toggle-btn" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 8px; background-color: #e9e9e9; border-radius: 8px;">
+                <h4 style="margin: 0; color: #555; font-size: 15px;">📅 历史记录</h4>
+                <span id="history-arrow" style="font-size: 12px; color: #999;">▼ 展开</span>
+            </div>
+            <div id="history-list-wrapper" style="display: none; margin-top: 10px;">
+                <div id="history-list" style="font-size: 14px; color: #666; max-height: 150px; overflow-y: auto; background-color: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                    <p style="margin: 0; color: #999;">暂无历史记录</p>
+                </div>
+                <button id="clear-history-btn" style="display: none; margin-top: 10px; padding: 5px 10px; background-color: #f1f1f1; color: #999; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; cursor: pointer;">清空历史</button>
+            </div>
+        </div>
+    </div>
 
     <!-- 弹窗结构 -->
     <div id="health-alert" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
@@ -449,10 +449,10 @@
     const bmiMarker = document.getElementById('bmi-marker');
 
     // 健康建议
-    const tipsUnderweight = document.getElementById('tips-underweight');
-    const tipsNormal = document.getElementById('tips-normal');
-    const tipsOverweight = document.getElementById('tips-overweight');
-    const tipsObese = document.getElementById('tips-obese');
+    const tipsUnderweight = document.querySelector('.health-tips #tips-underweight');
+    const tipsNormal = document.querySelector('.health-tips #tips-normal');
+    const tipsOverweight = document.querySelector('.health-tips #tips-overweight');
+    const tipsObese = document.querySelector('.health-tips #tips-obese');
 
     // --- 弹窗元素 ---
     const advancedModal = document.getElementById('advanced-modal');
