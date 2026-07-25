@@ -323,10 +323,29 @@
                     <div class="bmi-value" id="bmi-value">25.0</div>
                     <div class="bmi-category" id="bmi-category">正常体重</div>
                     <div class="bmi-desc" id="bmi-desc">您的体重在健康范围内。</div>
+
                     <!-- 生成健康报告按钮 -->
                     <button id="generate-report-btn" style="display: none; width: 100%; padding: 12px; margin-top: 20px; background-color: #2196F3; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">
                         📊 一键生成健康报告
                     </button>
+
+                    <!-- 历史记录区域 (带折叠功能) -->
+                    <div id="history-section" style="margin-top: 25px; border-top: 1px dashed #ddd; padding-top: 15px;">
+                        <!-- 点击这个按钮可以展开/收起历史记录 -->
+                        <div id="history-toggle-btn" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 8px; background-color: #f9f9f9; border-radius: 8px;">
+                            <h4 style="margin: 0; color: #555; font-size: 15px;">📅 历史记录</h4>
+                            <span id="history-arrow" style="font-size: 12px; color: #999;">▼ 展开</span>
+                        </div>
+
+                        <!-- 历史记录列表 (默认隐藏) -->
+                        <div id="history-list-wrapper" style="display: none; margin-top: 10px;">
+                            <div id="history-list" style="font-size: 14px; color: #666; max-height: 150px; overflow-y: auto; background-color: #fafafa; padding: 10px; border-radius: 8px;">
+                                <p style="margin: 0; color: #999;">暂无历史记录</p>
+                            </div>
+                            <button id="clear-history-btn" style="display: none; margin-top: 10px; padding: 5px 10px; background-color: #f1f1f1; color: #999; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; cursor: pointer;">清空历史</button>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="bmi-chart">
@@ -588,7 +607,21 @@ ${description.replace(/<br>/g, '\n')}
             // 直接弹窗显示报告
             alert(reportContent);
         };
-      
+
+        // 9. 保存历史记录
+        const historyData = JSON.parse(localStorage.getItem('bmiHistory')) || [];
+        const newRecord = {
+            date: new Date().toLocaleString('zh-CN'),
+            bmi: roundedBMI,
+            category: category,
+            bmr: roundedBMR,
+            bodyFat: finalBodyFat ? finalBodyFat.toFixed(1) + '%' : '未提供'
+        };
+        historyData.unshift(newRecord); // 把新记录加到最前面
+        if (historyData.length > 10) historyData.pop(); // 最多保留10条
+        localStorage.setItem('bmiHistory', JSON.stringify(historyData));
+        renderHistory(); // 刷新列表显示
+
     } 
 
     // --- 事件监听器 ---
@@ -669,6 +702,58 @@ ${description.replace(/<br>/g, '\n')}
     tipsNormal.style.display = 'none';
     tipsOverweight.style.display = 'none';
     tipsObese.style.display = 'none';
+
+    // --- 渲染历史记录列表 ---
+    function renderHistory() {
+        const historyData = JSON.parse(localStorage.getItem('bmiHistory')) || [];
+        const historyList = document.getElementById('history-list');
+        const clearBtn = document.getElementById('clear-history-btn');
+        const toggleBtn = document.getElementById('history-toggle-btn');
+        const listWrapper = document.getElementById('history-list-wrapper');
+        const arrow = document.getElementById('history-arrow');
+
+        if (historyData.length === 0) {
+            historyList.innerHTML = '<p style="margin: 0; color: #999;">暂无历史记录</p>';
+            clearBtn.style.display = 'none';
+            toggleBtn.style.display = 'none'; // 没记录时，连折叠按钮也隐藏
+            return;
+        }
+
+        // 有记录时，显示折叠按钮
+        toggleBtn.style.display = 'flex';
+        clearBtn.style.display = 'inline-block';
+
+        let html = '';
+        historyData.forEach(item => {
+            html += `<div style="padding: 8px; border-bottom: 1px solid #eee;">
+                        <strong>${item.date}</strong><br>
+                        BMI: ${item.bmi} (${item.category}) | BMR: ${item.bmr} | 体脂: ${item.bodyFat}
+                     </div>`;
+        });
+        historyList.innerHTML = html;
+
+        // 绑定折叠/展开按钮的点击事件
+        toggleBtn.onclick = function () {
+            if (listWrapper.style.display === 'none') {
+                listWrapper.style.display = 'block';
+                arrow.innerText = '▲ 收起';
+            } else {
+                listWrapper.style.display = 'none';
+                arrow.innerText = '▼ 展开';
+            }
+        };
+    }
+
+    // --- 清空历史记录按钮事件 ---
+    document.getElementById('clear-history-btn').addEventListener('click', function () {
+        if (confirm('确定要清空所有历史记录吗？')) {
+            localStorage.removeItem('bmiHistory');
+            renderHistory();
+        }
+    });
+
+    // --- 页面加载时，自动显示历史记录 ---
+    renderHistory();
         
 </script>
 
