@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>健康BMI计算器</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
             --primary-color: #4CAF50;
@@ -388,6 +391,16 @@
             </div>
         </div>
 
+        <!-- 新增：BMI趋势图区域 -->
+        <div id="chart-section" style="margin-bottom: 30px; display: none;">
+            <h4 style="margin-bottom: 15px; color: #555;">📈 BMI 变化趋势</h4>
+            <canvas id="bmiChart" height="100"></canvas>
+            <!-- 添加设置目标按钮 -->
+            <button id="set-goal-btn" style="margin-top: 15px; padding: 8px 15px; background-color: #FF9800; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                🎯 设置目标BMI
+            </button>
+        </div>
+
         <!-- 粘贴过来的历史记录模块 -->
         <div id="history-section">
             <div id="history-toggle-btn" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 8px; background-color: #e9e9e9; border-radius: 8px;">
@@ -430,7 +443,24 @@
             </div>
         </div>
     </div>
+
+    <!-- 新增：设置目标BMI的弹窗 -->
+    <div id="goal-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1001; justify-content: center; align-items: center;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; max-width: 300px; width: 90%;">
+            <h3 style="margin-top: 0; color: #333;">🎯 设置你的目标BMI</h3>
+            <div class="form-group">
+                <label for="goal-bmi-input">目标BMI值</label>
+                <input type="number" id="goal-bmi-input" placeholder="例如: 22.5" step="0.1" min="10" max="40" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="goal-cancel-btn" style="flex: 1; background-color: #f1f1f1; color: #555; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">取消</button>
+                <button id="goal-save-btn" style="flex: 1; background-color: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">保存目标</button>
+            </div>
+        </div>
+    </div>
+
 </body>
+
 <script>
     // --- 获取所有页面元素 ---
     const calculateBtn = document.getElementById('calculate-btn');
@@ -742,6 +772,79 @@ ${description.replace(/<br>/g, '\n')}
                 arrow.innerText = '▼ 展开';
             }
         };
+        renderChart();
+    }
+
+    // 新增：渲染BMI趋势图 (已更新，包含目标线)
+    function renderChart() {
+        const historyData = JSON.parse(localStorage.getItem('bmiHistory')) || [];
+        const chartSection = document.getElementById('chart-section');
+
+        // 如果历史记录少于2条，就不显示图表区域
+        if (historyData.length < 2) {
+            chartSection.style.display = 'none';
+            return;
+        }
+
+        // 有足够数据，显示图表区域
+        chartSection.style.display = 'block';
+
+        // 准备数据：反转数组，让时间轴从左到右是正序
+        const labels = historyData.map(record => record.date.split(' ')[0]).reverse(); // 只取日期部分
+        const dataPoints = historyData.map(record => record.bmi).reverse();
+
+        const ctx = document.getElementById('bmiChart').getContext('2d');
+
+        // 如果图表已存在，先销毁它，避免重复渲染出错
+        if (window.myBmiChart) {
+            window.myBmiChart.destroy();
+        }
+
+        // 读取目标BMI
+        const targetBMI = parseFloat(localStorage.getItem('bmiGoal'));
+
+        // 准备图表数据集
+        const datasets = [{
+            label: 'BMI 变化趋势',
+            data: dataPoints,
+            borderColor: '#2196F3',
+            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+            tension: 0.3,
+            fill: true
+        }];
+
+        // 如果设置了目标，就添加一条目标线到数据集中
+        if (targetBMI) {
+            datasets.push({
+                label: `目标 BMI (${targetBMI})`,
+                data: Array(dataPoints.length).fill(targetBMI), // 创建一个和目标值一样长的数组
+                borderColor: '#FF9800', // 橙色虚线
+                borderDash: [5, 5],
+                fill: false,
+                pointRadius: 0 // 不显示数据点
+            });
+        }
+
+        // 创建新的图表
+        window.myBmiChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets // 使用准备好的数据集
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: { display: true, text: 'BMI' }
+                    },
+                    x: {
+                        title: { display: true, text: '日期' }
+                    }
+                }
+            }
+        });
     }
 
     // --- 清空历史记录按钮事件 ---
@@ -749,11 +852,56 @@ ${description.replace(/<br>/g, '\n')}
         if (confirm('确定要清空所有历史记录吗？')) {
             localStorage.removeItem('bmiHistory');
             renderHistory();
+            const chartSection = document.getElementById('chart-section');
+            if (chartSection) chartSection.style.display = 'none';
+
+            if (window.myBmiChart) {
+                window.myBmiChart.destroy();
+                window.myBmiChart = null;
+            }
+
         }
     });
 
+   
+
     // --- 页面加载时，自动显示历史记录 ---
     renderHistory();
+
+    // --- 目标设置功能逻辑 ---
+
+    // 1. 获取目标功能相关的元素
+    const setGoalBtn = document.getElementById('set-goal-btn');
+    const goalModal = document.getElementById('goal-modal');
+    const goalInput = document.getElementById('goal-bmi-input');
+    const goalSaveBtn = document.getElementById('goal-save-btn');
+    const goalCancelBtn = document.getElementById('goal-cancel-btn');
+
+    // 2. 打开弹窗
+    setGoalBtn.addEventListener('click', () => {
+        // 打开时，先读取已保存的目标（如果有的话）
+        const savedGoal = localStorage.getItem('bmiGoal');
+        goalInput.value = savedGoal || '';
+        goalModal.style.display = 'flex';
+    });
+
+    // 3. 关闭弹窗
+    goalCancelBtn.addEventListener('click', () => {
+        goalModal.style.display = 'none';
+    });
+
+    // 4. 保存目标
+    goalSaveBtn.addEventListener('click', () => {
+        const targetBMI = parseFloat(goalInput.value);
+        if (targetBMI && targetBMI > 0) {
+            localStorage.setItem('bmiGoal', targetBMI); // 保存到本地存储
+            goalModal.style.display = 'none'; // 关闭弹窗
+            renderChart(); // 重新渲染图表，显示新的目标线
+            alert(`目标BMI ${targetBMI} 设置成功！加油！`);
+        } else {
+            alert('请输入一个有效的目标BMI值！');
+        }
+    });
         
 </script>
 
